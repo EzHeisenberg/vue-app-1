@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <link rel="stylesheet" href="css/bootstrap.css">
+
+    <title>COVID-14</title>
+</head>
+<body>
+<div id="demo" class="container" v-cloak>
+    <h1 class="text-center p-5">Covid Tracker</h1>
+    <div class="p-4">
+
+        <div class="shadow card text-center">
+            <div class="card-header">
+                <h2>Aujourd'hui</h2>
+            </div>
+            <table class="table table-bordered table-striped my-auto">
+                <thead>
+                <tr>
+                    <th scope="col">Cas Confirmés</th>
+                    <th scope="col">Hospitaliés</th>
+                    <th scope="col">Réanimations</th>
+                    <th scope="col">Décès</th>
+                    <th scope="col">Guéris</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>{{ todayData.casConfirmes }}</td>
+                    <td>{{ todayData.hospitalises }}</td>
+                    <td>{{ todayData.reanimation }}</td>
+                    <td>{{ todayData.deces }}</td>
+                    <td>{{ todayData.gueris }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <hr>
+
+
+
+    <input type="text" v-model="searchString" placeholder="Entrer votre département" />
+
+    <input type="date" name="trip-start" v-model="currentDay">
+    <button @click="covidDepartement">Rechercher</button>
+
+
+
+    <div class="row">
+        <div class="col-md-3" v-for="dep in filteredDep">
+            <div class="shadow card text-center m-2">
+                <div class="card-header">
+                    <h5>{{dep.nom}}</h5>
+                </div>
+                <div class="card-body">
+                    <p>hospitalises : {{dep.hospitalises}}</p>
+                    <hr>
+                    <p>reanimation : {{dep.reanimation}}</p>
+                    <hr>
+                    <p>deces : {{dep.deces}}</p>
+                    <hr>
+                    <p>gueris : {{dep.gueris}}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+</div>
+
+
+</body>
+
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script>
+    const apiURL = 'https://coronavirusapi-france.now.sh/FranceLiveGlobalData'
+    const apiURLDate = 'https://coronavirusapi-france.now.sh/AllDataByDate?date='
+    
+
+    const demo = new Vue({
+        el: '#demo',
+        data: {
+            searchString: "",
+            currentDay: moment().subtract(1, "days").format('YYYY-MM-DD'),
+            todayData: [],
+            departementData: [],
+            casConfirmes: 'casConfirmes',
+            hospitalises: 'hospitalises',
+            reanimation: 'reanimation',
+            deces: 'deces',
+            gueris: 'gueris',
+            date: 'date',
+            source: 'source',
+
+
+        },
+        created: function() {
+            this.covidToDay(),
+            this.covidDepartement()
+        },
+        watch: {
+
+        },
+        filters: {
+
+        },
+        methods: {
+            covidToDay: async function () {
+                try {
+                    const response = await axios.get(apiURL)
+                    console.log(response.data)
+                    this.todayData = response.data.FranceGlobalLiveData[0];
+                } catch (error) {
+                    console.log(error);
+                }
+            },
+            covidDepartement: async function () {
+                try {
+                    const response = await axios.get(apiURLDate + this.currentDay)
+                    console.log(apiURLDate + (this.currentDay).toString())
+                    console.log(response.data)
+                    this.departementData = response.data.allFranceDataByDate;
+                } catch (error) {
+                    console.log(error);
+                }
+            }
+        },
+        computed: {
+            filteredDep: function () {
+                var deprtements_array = this.departementData,
+                    searchString = this.searchString;
+
+                if(!searchString){
+                    return deprtements_array;
+                }
+
+                searchString = searchString.trim().toLowerCase();
+
+                deprtements_array = deprtements_array.filter(function(item){
+                    if(item.nom.toLowerCase().indexOf(searchString) !== -1){
+                        return item;
+                    }
+                })
+
+                // Return an array with the filtered data.
+                return deprtements_array;;
+            }
+        }
+    })
+</script>
+</html>
